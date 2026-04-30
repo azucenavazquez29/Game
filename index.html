@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hangman English Game</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
+    #word { font-size: 24px; letter-spacing: 8px; }
+    #message { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Hangman – English Practice</h1>
+  <p id="word"></p>
+  <input type="text" id="letter" maxlength="1" placeholder="Type a letter">
+  <button onclick="guess()">Guess</button>
+  <p>Attempts left: <span id="attempts"></span></p>
+  <p id="message"></p>
+
+  <script>
+    // Example phrases (zero conditional, present perfect, body parts)
+    const phrases = [
+      "If you touch fire it burns",   // zero conditional
+      "I have eaten pizza today",     // present perfect
+      "The heart pumps blood"         // body part
+    ];
+
+    // Pick random phrase
+    let phrase = phrases[Math.floor(Math.random() * phrases.length)].toUpperCase();
+    let hidden = phrase.split("").map((ch, i) => ch === " " ? " " : (i === 0 ? ch : "_"));
+    let attempts = 4;
+
+    document.getElementById("word").textContent = hidden.join(" ");
+    document.getElementById("attempts").textContent = attempts;
+
+    function guess() {
+      let input = document.getElementById("letter").value.toUpperCase();
+      document.getElementById("letter").value = "";
+      if (!input.match(/[A-Z]/)) return;
+
+      if (phrase.includes(input)) {
+        phrase.split("").forEach((ch, i) => {
+          if (ch === input) hidden[i] = input;
+        });
+      } else {
+        attempts--;
+      }
+
+      document.getElementById("word").textContent = hidden.join(" ");
+      document.getElementById("attempts").textContent = attempts;
+
+      if (!hidden.includes("_")) {
+        document.getElementById("message").textContent = "🎉 You win! Phrase: " + phrase;
+      } else if (attempts <= 0) {
+        document.getElementById("message").textContent = "❌ Game over! Phrase was: " + phrase;
+      }
+    }
+  </script>
+</body>
+</html>
