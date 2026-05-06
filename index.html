@@ -2,109 +2,247 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Hangman English Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hangman Team Challenge</title>
   <style>
+    :root {
+      --primary-blue: #2980b9;
+      --primary-green: #2ecc71;
+      --white: #ffffff;
+      --dark-blue: #1a5276;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
-      background: linear-gradient(135deg, #003366, #006699);
-      color: #fff;
+      background: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
+      color: var(--white);
       margin: 0;
-      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
     }
-    h1 {
-      background-color: #ff6600;
-      color: #fff;
-      padding: 15px;
-      margin: 0;
-      font-size: 28px;
-      letter-spacing: 2px;
+
+    .game-container {
+      background-color: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border: 2px solid var(--white);
+      width: 95%;
+      max-width: 800px;
     }
+
+    .header-info {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    #timer {
+      background: #e74c3c;
+      padding: 5px 15px;
+      border-radius: 20px;
+    }
+
+    /* Dibujo del Ahorcado */
+    #hangman-svg {
+      width: 150px;
+      height: 150px;
+      fill: none;
+      stroke: var(--white);
+      stroke-width: 4;
+      stroke-linecap: round;
+      margin: 10px auto;
+    }
+
+    .draw-part { display: none; } /* Oculto por defecto */
+
     #word {
       font-size: 28px;
-      letter-spacing: 10px;
-      margin: 30px 0;
-      color: #ffcc00;
+      letter-spacing: 5px;
+      margin: 20px 0;
+      font-weight: bold;
+      text-transform: uppercase;
     }
+
     input {
-      padding: 10px;
-      font-size: 18px;
-      border: 2px solid #ff6600;
-      border-radius: 5px;
-      outline: none;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 18px;
-      margin-left: 10px;
-      background-color: #ff6600;
-      color: #fff;
+      padding: 12px;
+      font-size: 20px;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      width: 50px;
+      text-align: center;
+      outline: none;
+      color: var(--primary-blue);
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 18px;
+      margin: 5px;
+      background-color: var(--white);
+      color: var(--primary-blue);
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
+      font-weight: bold;
       transition: 0.3s;
     }
+
     button:hover {
-      background-color: #ff3300;
+      background-color: var(--primary-green);
+      color: white;
     }
-    #attempts {
-      font-weight: bold;
-      color: #00ffcc;
-    }
+
     #message {
       margin-top: 20px;
+      font-size: 22px;
       font-weight: bold;
-      font-size: 20px;
-      color: #ffcc00;
+      height: 40px;
+    }
+
+    .success { color: #f1c40f; animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
 <body>
-  <h1>Hangman – English Practice</h1>
-  <p id="word"></p>
-  <input type="text" id="letter" maxlength="1" placeholder="Type a letter">
-  <button onclick="guess()">Guess</button>
-  <p>Attempts left: <span id="attempts"></span></p>
-  <p id="message"></p>
+
+  <div class="game-container">
+    <h1>Team English Challenge</h1>
+    
+    <div class="header-info">
+      <div>Time Left: <span id="timer">05:00</span></div>
+      <div>Attempts: <span id="attempts">6</span></div>
+    </div>
+
+    <svg id="hangman-svg" viewBox="0 0 100 100">
+      <path d="M20 90 L80 90 M30 90 L30 10 L60 10 L60 20" />
+      <circle id="head" class="draw-part" cx="60" cy="30" r="10" />
+      <line id="body-line" class="draw-part" x1="60" y1="40" x2="60" y2="70" />
+      <line id="arm-l" class="draw-part" x1="60" y1="50" x2="45" y2="60" />
+      <line id="arm-r" class="draw-part" x1="60" y1="50" x2="75" y2="60" />
+      <line id="leg-l" class="draw-part" x1="60" y1="70" x2="45" y2="85" />
+      <line id="leg-r" class="draw-part" x1="60" y1="70" x2="75" y2="85" />
+    </svg>
+
+    <p id="word"></p>
+    
+    <div id="controls">
+      <input type="text" id="letter" maxlength="1" placeholder="?">
+      <button onclick="guess()">GUESS</button>
+      <button onclick="nextTeam()" style="background-color: var(--dark-blue); color: white;">NEXT TEAM / RESET</button>
+    </div>
+
+    <div id="message"></div>
+  </div>
 
   <script>
-    // Example phrases (zero conditional, present perfect, body parts)
     const phrases = [
-      "If you touch fire it burns",   // zero conditional
-      "I have eaten pizza today",     // present perfect
-      "The heart pumps blood"         // body part
+      "IF YOU TOUCH FIRE IT BURNS",
+      "I HAVE EATEN PIZZA TODAY",
+      "THE HEART PUMPS BLOOD",
+      "THEY HAVE FINISHED HOMEWORK",
+      "IF IT RAINS THE GROUND GETS WET"
     ];
 
-    // Pick random phrase
-    let phrase = phrases[Math.floor(Math.random() * phrases.length)].toUpperCase();
-    let hidden = phrase.split("").map((ch, i) => ch === " " ? " " : (i === 0 ? ch : "_"));
-    let attempts = 4;
+    let phrase, hidden, attempts, timeLeft, timerInterval;
+    const bodyParts = ["head", "body-line", "arm-l", "arm-r", "leg-l", "leg-r"];
 
-    document.getElementById("word").textContent = hidden.join(" ");
-    document.getElementById("attempts").textContent = attempts;
+    function initGame() {
+      phrase = phrases[Math.floor(Math.random() * phrases.length)];
+      hidden = phrase.split("").map(ch => ch === " " ? " " : "_");
+      attempts = 6;
+      timeLeft = 300; // 5 minutos
+      
+      document.getElementById("message").textContent = "";
+      document.getElementById("message").className = "";
+      document.querySelectorAll(".draw-part").forEach(p => p.style.display = "none");
+      
+      clearInterval(timerInterval);
+      startTimer();
+      updateUI();
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        let mins = Math.floor(timeLeft / 60);
+        let secs = timeLeft % 60;
+        document.getElementById("timer").textContent = 
+          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          gameOver("TIME'S UP!");
+        }
+        timeLeft--;
+      }, 1000);
+    }
+
+    function updateUI() {
+      document.getElementById("word").textContent = hidden.join(" ");
+      document.getElementById("attempts").textContent = attempts;
+    }
 
     function guess() {
-      let input = document.getElementById("letter").value.toUpperCase();
-      document.getElementById("letter").value = "";
-      if (!input.match(/[A-Z]/)) return;
+      const inputEl = document.getElementById("letter");
+      const letter = inputEl.value.toUpperCase();
+      inputEl.value = "";
+      inputEl.focus();
 
-      if (phrase.includes(input)) {
+      if (!letter.match(/[A-Z]/) || letter === "" || attempts <= 0) return;
+
+      if (phrase.includes(letter)) {
         phrase.split("").forEach((ch, i) => {
-          if (ch === input) hidden[i] = input;
+          if (ch === letter) hidden[i] = letter;
         });
       } else {
+        // Falló: mostrar parte del ahorcado
+        const partToShow = bodyParts[6 - attempts];
+        if(partToShow) document.getElementById(partToShow).style.display = "block";
         attempts--;
       }
 
-      document.getElementById("word").textContent = hidden.join(" ");
-      document.getElementById("attempts").textContent = attempts;
+      updateUI();
+      checkWin();
+    }
 
+    function checkWin() {
       if (!hidden.includes("_")) {
-        document.getElementById("message").textContent = "🎉 You win! Phrase: " + phrase;
+        clearInterval(timerInterval);
+        document.getElementById("message").textContent = "✨ EXCELLENT WORK TEAM! ✨";
+        document.getElementById("message").className = "success";
       } else if (attempts <= 0) {
-        document.getElementById("message").textContent = "❌ Game over! Phrase was: " + phrase;
+        gameOver("GAME OVER!");
       }
     }
+
+    function gameOver(msg) {
+      clearInterval(timerInterval);
+      document.getElementById("message").textContent = `${msg} Phrase: ${phrase}`;
+    }
+
+    function nextTeam() {
+      initGame();
+    }
+
+    // Enter Key Support
+    document.getElementById("letter").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") guess();
+    });
+
+    // Start first game
+    initGame();
   </script>
 </body>
 </html>
