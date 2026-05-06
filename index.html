@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hangman Team Challenge</title>
+  <title>Hangman Team Challenge - First Word Hint</title>
   <style>
     :root {
       --primary-blue: #2980b9;
       --primary-green: #2ecc71;
       --white: #ffffff;
-      --dark-blue: #1a5276;
+      --yellow: #f1c40f;
     }
 
     body {
@@ -27,10 +27,10 @@
 
     .game-container {
       background-color: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
       padding: 30px;
       border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       border: 2px solid var(--white);
       width: 95%;
       max-width: 800px;
@@ -39,21 +39,21 @@
     .header-info {
       display: flex;
       justify-content: space-around;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       font-weight: bold;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
     }
 
     #timer {
       background: #e74c3c;
       padding: 5px 15px;
       border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
-    /* Dibujo del Ahorcado */
     #hangman-svg {
-      width: 150px;
-      height: 150px;
+      width: 140px;
+      height: 140px;
       fill: none;
       stroke: var(--white);
       stroke-width: 4;
@@ -61,25 +61,33 @@
       margin: 10px auto;
     }
 
-    .draw-part { display: none; } /* Oculto por defecto */
+    .draw-part { display: none; }
 
     #word {
-      font-size: 28px;
-      letter-spacing: 5px;
-      margin: 20px 0;
+      font-size: 26px;
+      letter-spacing: 4px;
+      margin: 25px 0;
       font-weight: bold;
       text-transform: uppercase;
+      background: rgba(0,0,0,0.1);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .input-area {
+      margin: 20px 0;
     }
 
     input {
       padding: 12px;
-      font-size: 20px;
+      font-size: 22px;
       border: none;
       border-radius: 8px;
-      width: 50px;
+      width: 60px;
       text-align: center;
       outline: none;
       color: var(--primary-blue);
+      font-weight: bold;
     }
 
     button {
@@ -96,34 +104,29 @@
     }
 
     button:hover {
-      background-color: var(--primary-green);
-      color: white;
+      background-color: var(--yellow);
+      transform: translateY(-2px);
     }
 
     #message {
       margin-top: 20px;
-      font-size: 22px;
+      font-size: 24px;
       font-weight: bold;
-      height: 40px;
+      min-height: 40px;
     }
 
-    .success { color: #f1c40f; animation: pulse 1s infinite; }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
+    .win-text { color: var(--yellow); animation: bounce 0.5s infinite alternate; }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
   </style>
 </head>
 <body>
 
   <div class="game-container">
-    <h1>Team English Challenge</h1>
+    <h1>Team English Battle</h1>
     
     <div class="header-info">
-      <div>Time Left: <span id="timer">05:00</span></div>
-      <div>Attempts: <span id="attempts">6</span></div>
+      <div>Time: <span id="timer">05:00</span></div>
+      <div>Mistakes: <span id="attempts">0</span>/6</div>
     </div>
 
     <svg id="hangman-svg" viewBox="0 0 100 100">
@@ -138,10 +141,10 @@
 
     <p id="word"></p>
     
-    <div id="controls">
-      <input type="text" id="letter" maxlength="1" placeholder="?">
+    <div class="input-area">
+      <input type="text" id="letter" maxlength="1" placeholder="?" autocomplete="off">
       <button onclick="guess()">GUESS</button>
-      <button onclick="nextTeam()" style="background-color: var(--dark-blue); color: white;">NEXT TEAM / RESET</button>
+      <button onclick="nextTeam()" style="background-color: #2c3e50; color: white;">NEXT TEAM</button>
     </div>
 
     <div id="message"></div>
@@ -152,19 +155,31 @@
       "IF YOU TOUCH FIRE IT BURNS",
       "I HAVE EATEN PIZZA TODAY",
       "THE HEART PUMPS BLOOD",
-      "THEY HAVE FINISHED HOMEWORK",
-      "IF IT RAINS THE GROUND GETS WET"
+      "SHE HAS VISITED LONDON",
+      "WATER BOILS AT ONE HUNDRED DEGREES",
+      "MY KNEE HURTS SINCE YESTERDAY"
     ];
 
-    let phrase, hidden, attempts, timeLeft, timerInterval;
+    let phrase, hidden, mistakes, timeLeft, timerInterval;
     const bodyParts = ["head", "body-line", "arm-l", "arm-r", "leg-l", "leg-r"];
 
     function initGame() {
+      // 1. Seleccionar frase
       phrase = phrases[Math.floor(Math.random() * phrases.length)];
-      hidden = phrase.split("").map(ch => ch === " " ? " " : "_");
-      attempts = 6;
-      timeLeft = 300; // 5 minutos
+      let words = phrase.split(" ");
+      let firstWord = words[0];
+
+      // 2. Crear versión oculta pero REVELANDO la primera palabra
+      hidden = phrase.split("").map((ch, index) => {
+        if (ch === " ") return " ";
+        // Si el índice es menor a la longitud de la primera palabra, la mostramos
+        return index < firstWord.length ? ch : "_";
+      });
+
+      mistakes = 0;
+      timeLeft = 300; 
       
+      // Reset UI
       document.getElementById("message").textContent = "";
       document.getElementById("message").className = "";
       document.querySelectorAll(".draw-part").forEach(p => p.style.display = "none");
@@ -182,52 +197,51 @@
           `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         
         if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          gameOver("TIME'S UP!");
+          endGame("TIME'S UP!");
         }
         timeLeft--;
       }, 1000);
     }
 
     function updateUI() {
-      document.getElementById("word").textContent = hidden.join(" ");
-      document.getElementById("attempts").textContent = attempts;
+      document.getElementById("word").textContent = hidden.join("");
+      document.getElementById("attempts").textContent = mistakes;
     }
 
     function guess() {
       const inputEl = document.getElementById("letter");
-      const letter = inputEl.value.toUpperCase();
+      const char = inputEl.value.toUpperCase();
       inputEl.value = "";
       inputEl.focus();
 
-      if (!letter.match(/[A-Z]/) || letter === "" || attempts <= 0) return;
+      if (!char.match(/[A-Z]/) || char === "" || mistakes >= 6) return;
 
-      if (phrase.includes(letter)) {
-        phrase.split("").forEach((ch, i) => {
-          if (ch === letter) hidden[i] = letter;
+      if (phrase.includes(char)) {
+        phrase.split("").forEach((c, i) => {
+          if (c === char) hidden[i] = char;
         });
       } else {
-        // Falló: mostrar parte del ahorcado
-        const partToShow = bodyParts[6 - attempts];
-        if(partToShow) document.getElementById(partToShow).style.display = "block";
-        attempts--;
+        if (bodyParts[mistakes]) {
+          document.getElementById(bodyParts[mistakes]).style.display = "block";
+        }
+        mistakes++;
       }
 
       updateUI();
-      checkWin();
+      checkStatus();
     }
 
-    function checkWin() {
+    function checkStatus() {
       if (!hidden.includes("_")) {
         clearInterval(timerInterval);
-        document.getElementById("message").textContent = "✨ EXCELLENT WORK TEAM! ✨";
-        document.getElementById("message").className = "success";
-      } else if (attempts <= 0) {
-        gameOver("GAME OVER!");
+        document.getElementById("message").textContent = "✨ EXCELLENT! TEAM VICTORY! ✨";
+        document.getElementById("message").className = "win-text";
+      } else if (mistakes >= 6) {
+        endGame("GAME OVER!");
       }
     }
 
-    function gameOver(msg) {
+    function endGame(msg) {
       clearInterval(timerInterval);
       document.getElementById("message").textContent = `${msg} Phrase: ${phrase}`;
     }
@@ -236,12 +250,10 @@
       initGame();
     }
 
-    // Enter Key Support
     document.getElementById("letter").addEventListener("keypress", (e) => {
       if (e.key === "Enter") guess();
     });
 
-    // Start first game
     initGame();
   </script>
 </body>
